@@ -20,4 +20,8 @@ triangleCentroidVector = geometry_functions.calculateCentroidOfTriangle(p1, p2, 
 lengthOfCentroidVector = geometry_functions.calculateLengthOf3DVector(triangleCentroidVector[0], triangleCentroidVector[1], triangleCentroidVector[2])
 
 angleOfTilt = geometry_functions.calculateAngleWithZAxis(planeNormalVector)
-print(angleOfTilt)
+
+
+print(geometry_functions.servoAngleToLegHeight2(10.0, 20.0, 50.0))
+
+# print(angleOfTilt)

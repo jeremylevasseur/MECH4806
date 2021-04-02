@@ -19,3 +19,11 @@ def calculateLengthOf3DVector(x, y, z):
 
 def calculateAngleWithZAxis(normalVector):
     return math.degrees(math.acos(normalVector[2] / calculateLengthOf3DVector(normalVector[0], normalVector[1], normalVector[2])))
+
+
+def servoAngleToLegHeight(servoAngle, servoArmHeight, baseLegHeight):
+    servoAngleInRadians = math.radians(servoAngle)
+    phi = math.asin((servoArmHeight/baseLegHeight) * math.sin(math.radians(90) - servoAngleInRadians))
+    alpha = math.radians(90) - phi + servoAngleInRadians
+    return (baseLegHeight * math.sin(alpha)) / math.sin(math.radians(90) - servoAngleInRadians)
+
