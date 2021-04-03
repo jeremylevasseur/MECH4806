@@ -1,27 +1,43 @@
 import numpy as np
 import geometry_functions
 
-# Constants
-triangleSideLength = 120
-legOneHeight = 40
-legTwoHeight = 60
-legThreeHeight = 50
-
-# Setting points
-p1 = np.array([0, 0, legOneHeight])
-p2 = np.array([triangleSideLength, 0, legTwoHeight])
-p3 = np.array([triangleSideLength/2, geometry_functions.calculateRightTriangleHeight(triangleSideLength/2, triangleSideLength), legThreeHeight])
-
-# Setting desired angle of tilt
-desiredAngleOfTilt = 10  # Degrees
-
-planeNormalVector = np.cross( (p2 - p1) , (p3 - p1) )
-
-triangleCentroidVector = geometry_functions.calculateCentroidOfTriangle(p1, p2, p3)
-lengthOfCentroidVector = geometry_functions.calculateLengthOf3DVector(triangleCentroidVector)
-
-angleOfTilt = geometry_functions.calculateAngleWithZAxis(planeNormalVector)
-
-# print(geometry_functions.servoAngleToLegHeight(10.0, 20.0, 50.0))
+# ============== Constants =================
 
 
+# ==========================================
+
+# Creating starting positions that lead to a flat platform
+# Geometry of system is based off of CAD starting point
+
+# Lower Link 1 Points
+lowerLink1_P_0 = np.array([22.50, 77.9, 0])
+lowerLink1_P_1 = np.array([44.957, 77.9, -1.392])
+
+# Lower Link 2 Points
+lowerLink2_P_0 = np.array([77.9, 22.5, 0])
+lowerLink2_P_1 = np.array([77.9, 44.957, -1.392])
+
+# Upper Link 1 Points
+upperLink1_P_0 = lowerLink1_P_1
+upperLink1_P_1 = np.array([32.5, 77.9, 126])
+
+# Upper Link 2 Points
+upperLink2_P_0 = lowerLink2_P_1
+upperLink2_P_1 = np.array([77.9, 32.5, 126])
+
+
+def tiltToServoAngle(tilt):
+    '''
+    Using geometry from CAD, there is a linear relationship between the servo angle and the platform angle:
+        y = 0.2867x + 1.0021
+    where
+        y = tilt of platform in X-plane or in Y-plane
+        x = servo angle
+    
+    We must find the servo angle given the desired tilt of the platform in the X-plane or Y-Plane by solving the linear relationship for y:
+        x = 3.488y - 3.495
+    '''
+
+    return (3.488 * tilt) - 3.495
+
+print(tiltToServoAngle(10))
