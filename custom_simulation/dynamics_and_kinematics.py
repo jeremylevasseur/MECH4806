@@ -25,9 +25,20 @@ def angleOfTiltToAcceleration(gravity, angleOfTilt):
 
 # ================ CONSTANT ACCELERATION KINEMATICS ================
 
-def distanceMoved_1(v_i, a, t):
-    return ( v_i * t ) + ( 0.5 * a * (t**2) )
+'''
+    Inputs:
+        d_i         =>      Initial Position (m)
+        v_i         =>      Initial Velocity (m/s)
+        a           =>      Acceleration (m/s^2)
+        t           =>      Time (s)
 
-# def distanceMoved_2(v_i, v_f, t):
-#     return 0.5 * (v_i + v_f) * t
+    Outputs:
+        d_f         =>      Final Position (m) 
+'''
+def distanceMoved(d_i, v_i, a, t):
+    return d_i + ( v_i * t ) + ( 0.5 * a * (t**2) )
+
+def finalVelocity(v_i, a, t):
+    return v_i + (a*t)
+
 
