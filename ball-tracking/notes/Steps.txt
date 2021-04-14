@@ -1,0 +1,18 @@
+
+    1) Import video from a saved mp4 file or from a live video stream
+
+    2) Separate this video into a list of frames
+
+    3) Loop through each frame 1 by 1 and do the following actions:
+        
+        a) Resize the frame
+            - TODO
+
+        b) Blur the frame
+            - Causes edges to have less of an impact on the contour and colour analysis
+
+        c) Convert all the colours within the frame to Hue, Saturation, and Value (HSV) colours
+            - Also known as Hue, Saturation, and Brightness (HSB) colours
+            - Better than using RGB colors because the RGB components of an object's colour are dependant upon the amount of light hitting it
+            
+        d) 

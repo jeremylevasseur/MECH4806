@@ -1,0 +1,9 @@
+
+Border:
+	Coordintes: (90, 19)
+	Size: (460, 445)
+
+Center Mark:
+
+	Coordinates: (315, 230)
+	Size: (15, 15)
