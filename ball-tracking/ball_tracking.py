@@ -11,6 +11,7 @@ import cv2
 import imutils
 import time
 import math
+import csv
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -114,7 +115,7 @@ while True:
 			xDistance = centerX - x
 			yDistance = centerY - y
 			totalDistance = math.sqrt( (xDistance**2) + (yDistance**2) )
-			xDistance.append([xDistance, yDistance, totalDistance])
+			distanceData.append([xDistance, yDistance, totalDistance])
 			print("X Distance: %.2f, Y Distance: %.2f, Total Distance: %.2f" % (xDistance, yDistance, totalDistance))
 
 
@@ -160,5 +161,5 @@ cv2.destroyAllWindows()
 with open('./distance_data.csv', 'w', encoding='utf-8') as file:
 	csvWriter = csv.writer(file, delimiter=',')
 
-	for row in range(distanceData):
+	for row in distanceData:
 		csvWriter.writerow(row)
