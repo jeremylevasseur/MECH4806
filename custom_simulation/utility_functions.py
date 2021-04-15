@@ -1,3 +1,4 @@
+import math
 
 '''
     These conversion functions assume the distance scale is in pixels per metre
@@ -32,3 +33,27 @@ def printProgressBar (iteration, total, prefix='', suffix='', decimals=1, length
     # Print New Line on Complete
     if iteration == total:
         print()
+
+
+def calculateAllImportantPoints(origin_x, origin_y, distanceScale, halfPlatformWidth, alpha, theta, L1):
+    # (x1, y1)
+    x1 = origin_x + (metresMeasurementToPixelMeasurement(distanceScale, L1) * math.cos(math.radians(theta)))
+    y1 = origin_y - (metresMeasurementToPixelMeasurement(distanceScale, L1) * math.sin(math.radians(theta)))
+
+    # (x3, y3)
+    x3 = origin_x + (metresMeasurementToPixelMeasurement(distanceScale, 0.090) * math.cos(math.radians(theta)))
+    y3 = origin_y - (metresMeasurementToPixelMeasurement(distanceScale, 0.120) * math.sin(math.radians(theta)))
+
+    # (x2, y2)
+    x2 = x3 - ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.cos(
+        math.radians(alpha)))
+    y2 = y3 - ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.sin(
+        math.radians(alpha)))
+
+    # (x4, y4)
+    x4 = x3 + ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.cos(
+        math.radians(alpha)))
+    y4 = y3 + ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.sin(
+        math.radians(alpha)))
+
+    return x1, y1, x2, y2, x3, y3, x4, y4

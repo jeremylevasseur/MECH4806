@@ -1,14 +1,16 @@
-# LIBRARY IMPORTS
-from utility_functions import pixelMeasurementToMetresMeasurement, metresMeasurementToPixelMeasurement
-from gui import createPlatformGUI, createLegsGUI
+# ================ LIBRARY IMPORTS ================
+
+# Personally Created Libraries
+from utility_functions import pixelMeasurementToMetresMeasurement, metresMeasurementToPixelMeasurement, calculateAllImportantPoints
+from gui import createPlatformGUI, createLegsGUI, createButtonGUI
 from ball_object import Ball
 from platform_object import Platform
 from pid import PID_Controller
 from dynamics_and_kinematics import angleOfTiltToAcceleration, distanceMoved, finalVelocity
 from plot_data import plotPidOutputAndBallPositionTimeseries, plotBallPositionTimeseries
 
-import time
-
+# Third Party Libraries
+from tkinter import *
 
 # ================ CONSTANTS ================
 
@@ -19,33 +21,45 @@ screenHeight = 500  # pixels
 # Environment
 gravity = 9.81  # m/s^s
 distanceScale = screenWidth * 2  # 1 metre = 1000 pixels
-sampleTime = 0.025
+sampleTime = 0.025  # Rate at which the position measurements occur
+appliedAcceleration = 40000.0  # pixels/s^2 - The acceleration value that is applied to the ball when a button is clicked
 
 # Ball Properties
 ballMass = 0.45  # kg
 ballRadius = 0.02  # metres
 
 # Platform Preconditions
-startingPlatformAngleOfRotationInX = 0  # 0 degrees
-startingPlatformAngleOfRotationInY = 0  # 0 degrees
+startingPlatformAngleOfRotationInX = 0  # degrees
+startingPlatformAngleOfRotationInY = 0  # degrees
 
 # Ball Preconditions
-startingXPosition = screenWidth / 4  # pixels
-startingYPosition = screenHeight / 4  # pixels
+startingXPosition = screenWidth * 3/4  # pixels
+startingYPosition = screenHeight * 3/4  # pixels
 startingXVelocity = 0  # pixels/s
 startingYVelocity = 0  # pixels/s
 startingXAcceleration = 0  # pixels/s^2
 startingYAcceleration = 0  # pixels/s^2
 
 # PID Properties
-kp = 10
-ki = 0.005
-kd = 7
-outputLowerLimit = -30  # degrees
-outputUpperLimit = 30  # degrees
-setPointX = screenWidth/2  # pixels
-setPointY = screenHeight/2  # pixels
+kp = 1  # Proportional gain
+ki = 0.8  # Integral gain
+kd = 0.25  # Derivative gain
+outputLowerLimit = -30  # degrees - Sets the minimum angle of platform rotation
+outputUpperLimit = 30  # degrees - Sets the maximum angle of platform rotation
+setPointX = screenWidth/2  # pixels - Where you want the ball to end up in the X coordinate system
+setPointY = screenHeight/2  # pixels - Where you want the ball to end up in the Y coordinate system
 
+# Leg Constants
+distanceScaleLegs = screenWidth * 4  # 1 metre = 2000 pixels
+margin = 100  # Offsets drawings so that they aren't next to the GUI border
+L1 = 0.0225  # 22.5 mm - Length of the lower link
+L2 = 0.120  # 120 mm - Length of the upper link
+platformWidth = 0.160  # 160 mm
+halfPlatformWidth = platformWidth / 2
+rotationPointRadius = 5  # For drawings
+origin_x = margin
+origin_y = (screenHeight - margin)
+theta = 30
 
 # ================ CREATING MONITORING OBJECTS ================
 
@@ -61,12 +75,12 @@ systemData = {
 
 # Setting the measured distance value that is close enough 
 # to the set point for it to be considered as satisfactory
-nearSetpointCriteria = 1  # pixels
+nearSetpointCriteria = 5  # pixels
 
 # Setting the number of consequtive setpoint satisfactions
 # it will take for the system to end the program and display
 # the plots
-simulationFinished = 50  # Ball needs to be near the setpoint for 2 seconds straight
+simulationFinished = 200  # Ball needs to be near the setpoint for 2 seconds straight
 
 timeCyclesCounter = 0
 timeSeries = []  # Will be a list of the timestamps throughout the simulation
@@ -117,14 +131,99 @@ pidY = PID_Controller(
 tkRoot, canvas = createPlatformGUI(screenWidth, screenHeight)
 
 # Creating the first leg GUI
-windowLeg1, leg1Canvas = createLegsGUI(1, screenWidth=screenWidth, screenHeight=screenHeight)
-
+legXWindow, legXCanvas = createLegsGUI(1, screenWidth=screenWidth, screenHeight=screenHeight)
 
 # Creating the second leg GUI
-windowLeg2, leg2Canvas = createLegsGUI(2, screenWidth=screenWidth, screenHeight=screenHeight)# windowLeg2, leg2Canvas = createLegsGUI()
+legYWindow, legYCanvas = createLegsGUI(2, screenWidth=screenWidth, screenHeight=screenHeight)
+
+# Creating the button GUI
+buttonsWindow, buttonsCanvas = createButtonGUI(screenWidth=screenWidth, screenHeight=screenHeight)
+
+# ================ DRAWING INITIAL CANVAS OBJECTS ================
 
 # Drawing the ball in it's initial location
 ballOval = canvas.create_oval(ball.xPosition - ball.radius, ball.yPosition - ball.radius, ball.xPosition + ball.radius, ball.yPosition + ball.radius, fill='red')
+
+# Calculating important points for the legs GUI
+x1, y1, x2, y2, x3, y3, x4, y4 = calculateAllImportantPoints(origin_x, origin_y, distanceScaleLegs, halfPlatformWidth, platform.angleOfRotationInX, theta, L1)
+# Drawing platform rotation point on leg X canvas
+platformRotationPointLegX = legXCanvas.create_oval(x3 - rotationPointRadius, y3 - rotationPointRadius, x3 + rotationPointRadius, y3 + rotationPointRadius, fill='black')
+# Drawing platform rotation point on leg X canvas
+platformRotationPointLegY = legYCanvas.create_oval(x3 - rotationPointRadius, y3 - rotationPointRadius, x3 + rotationPointRadius, y3 + rotationPointRadius, fill='black')
+# Drawing platform line 1 on leg X canvas
+platformLine1LegX = legXCanvas.create_line(x2, y2, x3, y3, width=5)
+# Drawing platform line 2 on leg X canvas
+platformLine2LegX = legXCanvas.create_line(x3, y3, x4, y4, width=5)
+# Drawing platform line 1 on leg Y canvas
+platformLine1LegY = legYCanvas.create_line(x2, y2, x3, y3, width=5)
+# Drawing platform line 2 on leg Y canvas
+platformLine2LegY = legYCanvas.create_line(x3, y3, x4, y4, width=5)
+
+def applyForceInPositiveX():
+    print("Applying Force In +X")
+    ball.xAcceleration = appliedAcceleration
+
+def applyForceInNegativeX():
+    print("Applying Force In -X")
+    ball.xAcceleration = (-1) * appliedAcceleration
+
+def applyForceInPositiveY():
+    print("Applying Force In -Y")
+    ball.yAcceleration = appliedAcceleration
+
+def applyForceInNegativeY():
+    print("Applying Force In +Y")
+    ball.yAcceleration = (-1) * appliedAcceleration
+
+
+# Creating buttons on the button window
+# Note that, from the viewer's perspective, the Y directions are flipped and because of
+# this, the button labels and print messages in the Y direction are also flipped
+forceInPositiveXButton = Button(buttonsWindow, text="Apply Force In +X", command=applyForceInPositiveX).grid()
+forceInNegativeXButton = Button(buttonsWindow, text="Apply Force In -X", command=applyForceInNegativeX).grid()
+forceInNegativeYButton = Button(buttonsWindow, text="Apply Force In +Y", command=applyForceInNegativeY).grid()
+forceInPositiveYButton = Button(buttonsWindow, text="Apply Force In -Y", command=applyForceInPositiveY).grid()
+
+
+def updateLegX(alpha, theta=30):
+    # Defining global variables
+    global legXWindow, legXCanvas
+    global x1, y1, x2, y2, x3, y3, x4, y4
+    global platformLine1LegX, platformLine2LegX
+
+    x1, y1, x2, y2, x3, y3, x4, y4 = calculateAllImportantPoints(origin_x, origin_y, distanceScaleLegs, halfPlatformWidth, alpha, theta, L1)
+
+    # ================ RE-DRAWING SYSTEM ================
+
+    # Removing everything
+    legXCanvas.delete(platformLine1LegX)
+    legXCanvas.delete(platformLine2LegX)
+
+    # Platform Line 1
+    platformLine1LegX = legXCanvas.create_line(x2, y2, x3, y3, width=5)
+    # Platform Line 2
+    platformLine2LegX = legXCanvas.create_line(x3, y3, x4, y4, width=5)
+
+
+def updateLegY(alpha, theta=30):
+    # Defining global variables
+    global legYWindow, legYCanvas
+    global x1, y1, x2, y2, x3, y3, x4, y4
+    global platformLine1LegY, platformLine2LegY
+
+    x1, y1, x2, y2, x3, y3, x4, y4 = calculateAllImportantPoints(origin_x, origin_y, distanceScaleLegs, halfPlatformWidth, alpha, theta, L1)
+
+    # ================ RE-DRAWING SYSTEM ================
+
+    # Removing everything
+    legYCanvas.delete(platformLine1LegY)
+    legYCanvas.delete(platformLine2LegY)
+
+    # Platform Line 1
+    platformLine1LegY = legYCanvas.create_line(x2, y2, x3, y3, width=5)
+    # Platform Line 2
+    platformLine2LegY = legYCanvas.create_line(x3, y3, x4, y4, width=5)
+
 
 def controller():
     # Defining global variables
@@ -153,14 +252,18 @@ def controller():
     # to be considered satisfactory
     if abs(ball.xPosition - setPointX) <= nearSetpointCriteria:
         systemData['xAccuracy']['consequtiveMeasurmentsNearSetpoint'] += 1
+    else:
+        systemData['xAccuracy']['consequtiveMeasurmentsNearSetpoint'] = 0
     
     if abs(ball.yPosition - setPointY) <= nearSetpointCriteria:
         systemData['yAccuracy']['consequtiveMeasurmentsNearSetpoint'] += 1
+    else:
+        systemData['yAccuracy']['consequtiveMeasurmentsNearSetpoint'] = 0
     
     # Checking to see if the ball has been near the setpoint (in both the x and y coordinate)
     # for the simulation to end and for the plots to be shown
-    xCondition = systemData['xAccuracy']['consequtiveMeasurmentsNearSetpoint'] == simulationFinished
-    yCondition = systemData['yAccuracy']['consequtiveMeasurmentsNearSetpoint'] == simulationFinished
+    xCondition = systemData['xAccuracy']['consequtiveMeasurmentsNearSetpoint'] > simulationFinished
+    yCondition = systemData['yAccuracy']['consequtiveMeasurmentsNearSetpoint'] > simulationFinished
 
     if xCondition and yCondition:
         # Ball has been at the setpoint for a sufficient amount of time
@@ -168,10 +271,10 @@ def controller():
         # tkRootLegs.destroy()
 
         # Create plots
-        # plotPidOutputAndPositionTimeseries('X', timeSeries, positionXData, pidXOutputData)
-        # plotPidOutputAndPositionTimeseries('Y', timeSeries, positionYData, pidYOutputData)
-        plotBallPositionTimeseries('X', timeSeries, positionXData)
-        plotBallPositionTimeseries('Y', timeSeries, positionYData)
+        plotPidOutputAndBallPositionTimeseries('X', timeSeries, positionXData, pidXOutputData)
+        plotPidOutputAndBallPositionTimeseries('Y', timeSeries, positionYData, pidYOutputData)
+        # plotBallPositionTimeseries('X', timeSeries, positionXData)
+        # plotBallPositionTimeseries('Y', timeSeries, positionYData)
 
         exit()
     
@@ -200,10 +303,12 @@ def controller():
         # of tilts to the outputs of the PID controllers
         platform.angleOfRotationInX = pidX.getOutput(ball.xPosition)
         platform.angleOfRotationInY = pidY.getOutput(ball.yPosition)
+        updateLegX(platform.angleOfRotationInX)
+        updateLegY(platform.angleOfRotationInY)
 
         # Updating the ball acceleration states
-        ball.xAcceleration = angleOfTiltToAcceleration(gravity, platform.angleOfRotationInX)
-        ball.yAcceleration = angleOfTiltToAcceleration(gravity, platform.angleOfRotationInY)
+        ball.xAcceleration = metresMeasurementToPixelMeasurement(distanceScale, angleOfTiltToAcceleration(gravity, platform.angleOfRotationInX))
+        ball.yAcceleration = metresMeasurementToPixelMeasurement(distanceScale, angleOfTiltToAcceleration(gravity, platform.angleOfRotationInY))
 
         # Adding the calculated values to the data lists
         timeSeries.append(timeCyclesCounter)
@@ -217,7 +322,7 @@ def controller():
         tkRoot.after(int(sampleTime*1000), controller)  # Re-run this function after interval (in milliseconds)
 
 
-tkRoot.after(3000, controller)  # Begin the loop of getting control feedback
+tkRoot.after(15000, controller)  # Begin the loop of getting control feedback
 
 # Running the GUI
 tkRoot.mainloop()
