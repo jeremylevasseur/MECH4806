@@ -1,5 +1,6 @@
 from tkinter import *
 import math
+from utility_functions import pixelMeasurementToMetresMeasurement, metresMeasurementToPixelMeasurement
 
 def createPlatformGUI(screenWidth=500, screenHeight=500):
     # Constants
@@ -22,26 +23,65 @@ def createPlatformGUI(screenWidth=500, screenHeight=500):
     # Returning tkinter object and the canvas object
     return tkRoot, rootCanvas
 
-def createLegsGUI(tkRoot, screenWidth=500, screenHeight=500):
+def createLegsGUI(legNumber, screenWidth=500, screenHeight=500, theta=30, alpha=7.854):
+    # Constants
+    distanceScaleLegs = screenWidth * 4  # 1 metre = 2000 pixels
+    margin = 100
+    L1 = 0.0225  # 22.5 mm
+    L2 = 0.120  # 120 mm
+    platformWidth = 0.160  # 160 mm
+    halfPlatformWidth = platformWidth / 2
+    rotationPointRadius = 5
+
     # Creating the legs window
     legsWindow = Toplevel()
-    legsWindow.title("Legs Simulation")
+    legsWindow.title("Leg " + str(legNumber) + " Simulation")
 
     # Creating root canvas
     legsCanvas = Canvas(legsWindow, width=screenWidth, height=screenHeight)
     legsCanvas.pack()
 
-    legRect = legsCanvas.create_rectangle((screenWidth/2) - 100, (screenHeight/2) - 100, (screenWidth/2) + 100, (screenHeight/2) + 100, fill="black", width=2)
+    # ================ IMPORTANT POINTS ================
+
+    # Origin
+    origin_x = margin
+    origin_y = (screenHeight - margin)
+
+    # (x1, y1)
+    x1 = origin_x + (metresMeasurementToPixelMeasurement(distanceScaleLegs, L1) * math.cos(math.radians(theta)))
+    y1 = origin_y - (metresMeasurementToPixelMeasurement(distanceScaleLegs, L1) * math.sin(math.radians(theta)))
+
+    # (x3, y3)
+    x3 = origin_x + (metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.090) * math.cos(math.radians(theta)))
+    y3 = origin_y - (metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120) * math.sin(math.radians(theta)))
+
+    # (x2, y2)
+    x2 = x3 - ((metresMeasurementToPixelMeasurement(distanceScaleLegs, halfPlatformWidth)) * math.cos(math.radians(alpha)))
+    y2 = y3 - ((metresMeasurementToPixelMeasurement(distanceScaleLegs, halfPlatformWidth)) * math.sin(math.radians(alpha)))
+
+    # (x4, y4)
+    x4 = x3 + ((metresMeasurementToPixelMeasurement(distanceScaleLegs, halfPlatformWidth)) * math.cos(math.radians(alpha)))
+    y4 = y3 + ((metresMeasurementToPixelMeasurement(distanceScaleLegs, halfPlatformWidth)) * math.sin(math.radians(alpha)))
+
+    # ================ DRAWING SYSTEM ================
+
+    # Servo Rotation Point
+    servoRotationPoint = legsCanvas.create_oval(origin_x - rotationPointRadius, origin_y - rotationPointRadius, origin_x + rotationPointRadius, origin_y + rotationPointRadius, fill='black')
+
+    # Lower Link
+    lowerLinkLine = legsCanvas.create_line(origin_x, origin_y, x1, y1, width=5)
+
+    # Upper Link
+    upperLinkLine = legsCanvas.create_line(x1, y1, x2, y2, width=5)
+
+    # Platform Rotation Point
+    platformRotationPoint = legsCanvas.create_oval(x3 - rotationPointRadius, y3 - rotationPointRadius, x3 + rotationPointRadius, y3 + rotationPointRadius, fill='black')
+
+    # Platform Line 1
+    platformLine1 = legsCanvas.create_line(x2, y2, x3, y3, width=5)
+
+    # Platform Line 2
+    platformLine2 = legsCanvas.create_line(x3, y3, x4, y4, width=5)
 
     # Returning the new window
-    return tkRoot, legsCanvas
-
-
-def redrawBall(canvas, ballOval, ballObject):
-    # Removing old ball oval
-    canvas.delete(ballOval)
-
-    # Drawing new ball oval
-    ballOval = canvas.create_oval(ballObject.xPosition - ballObject.radius, ballObject.yPosition - ballObject.radius, ballObject.xPosition + ballObject.radius, ballObject.yPosition + ballObject.radius)
-
-    return canvas, ballOval
+    return legsWindow, legsCanvas

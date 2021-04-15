@@ -1,6 +1,6 @@
 # LIBRARY IMPORTS
 from utility_functions import pixelMeasurementToMetresMeasurement, metresMeasurementToPixelMeasurement
-from gui import createPlatformGUI, createLegsGUI, redrawBall
+from gui import createPlatformGUI, createLegsGUI
 from ball_object import Ball
 from platform_object import Platform
 from pid import PID_Controller
@@ -116,8 +116,12 @@ pidY = PID_Controller(
 # Creating the platform GUI
 tkRoot, canvas = createPlatformGUI(screenWidth, screenHeight)
 
-# Creating the legs GUI
-# windowLegs, legsCanvas = createLegsGUI(screenWidth, screenHeight)
+# Creating the first leg GUI
+windowLeg1, leg1Canvas = createLegsGUI(1, screenWidth=screenWidth, screenHeight=screenHeight)
+
+
+# Creating the second leg GUI
+windowLeg2, leg2Canvas = createLegsGUI(2, screenWidth=screenWidth, screenHeight=screenHeight)# windowLeg2, leg2Canvas = createLegsGUI()
 
 # Drawing the ball in it's initial location
 ballOval = canvas.create_oval(ball.xPosition - ball.radius, ball.yPosition - ball.radius, ball.xPosition + ball.radius, ball.yPosition + ball.radius, fill='red')
@@ -213,7 +217,7 @@ def controller():
         tkRoot.after(int(sampleTime*1000), controller)  # Re-run this function after interval (in milliseconds)
 
 
-tkRoot.after(0, controller)  # Begin the loop of getting control feedback
+tkRoot.after(3000, controller)  # Begin the loop of getting control feedback
 
 # Running the GUI
 tkRoot.mainloop()
