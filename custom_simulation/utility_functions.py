@@ -1,3 +1,4 @@
+import numpy as np
 import math
 
 '''
@@ -35,25 +36,33 @@ def printProgressBar (iteration, total, prefix='', suffix='', decimals=1, length
         print()
 
 
-def calculateAllImportantPoints(origin_x, origin_y, distanceScale, halfPlatformWidth, alpha, theta, L1):
-    # (x1, y1)
-    x1 = origin_x + (metresMeasurementToPixelMeasurement(distanceScale, L1) * math.cos(math.radians(theta)))
-    y1 = origin_y - (metresMeasurementToPixelMeasurement(distanceScale, L1) * math.sin(math.radians(theta)))
-
-    # (x3, y3)
-    x3 = origin_x + (metresMeasurementToPixelMeasurement(distanceScale, 0.090) * math.cos(math.radians(theta)))
-    y3 = origin_y - (metresMeasurementToPixelMeasurement(distanceScale, 0.120) * math.sin(math.radians(theta)))
+def calculateAllImportantPoints(inverseKinematicsActuator, L1, halfPlatformWidth, alpha, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian):
+    # (x4, y4)
+    x4_pixels = x3 + (halfPlatformWidth * math.cos(math.radians(alpha)))
+    y4_pixels = y3 + (halfPlatformWidth * math.sin(math.radians(alpha)))
 
     # (x2, y2)
-    x2 = x3 - ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.cos(
-        math.radians(alpha)))
-    y2 = y3 - ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.sin(
-        math.radians(alpha)))
+    # x2_cartesian = x3_cartesian - (halfPlatformWidth * math.cos(math.radians(alpha)))
+    x2_cartesian = x3_cartesian - (80.0 * math.cos(math.radians(alpha)))
+    # y2_cartesian = y3_cartesian + (halfPlatformWidth * math.sin(math.radians(alpha)))
+    y2_cartesian = y3_cartesian + (80.0 * math.sin(math.radians(alpha)))
+    
+    x2_pixels = x3 - (halfPlatformWidth * math.cos(math.radians(alpha)))
+    y2_pixels = y3 - (halfPlatformWidth * math.sin(math.radians(alpha)))
 
-    # (x4, y4)
-    x4 = x3 + ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.cos(
-        math.radians(alpha)))
-    y4 = y3 + ((metresMeasurementToPixelMeasurement(distanceScale, halfPlatformWidth)) * math.sin(
-        math.radians(alpha)))
+    # Setting actuator end effector to where it should be => (x2, y2)
+    inverseKinematicsActuator.ee = [x2_cartesian, y2_cartesian, 0.0]
 
-    return x1, y1, x2, y2, x3, y3, x4, y4
+    # Calculating link angles with inverse kinematics
+    [theta1, theta2] = inverseKinematicsActuator.angles
+
+    # (x1, y1)
+    x1_pixels = origin_x - (L1 * math.cos(theta1))
+    y1_pixels = origin_y - (L1 * math.sin(theta1))
+
+    lengthOfLowerLink = math.sqrt((abs(x1_pixels-origin_x)**2) + (abs(y1_pixels-origin_y)**2))
+    lengthOfUpperLink = math.sqrt((abs(x2_pixels-x1_pixels)**2) + (abs(y2_pixels-y1_pixels)**2))
+
+    print(alpha, math.degrees(theta1), math.degrees(theta2), lengthOfLowerLink, lengthOfUpperLink)
+
+    return x1_pixels, y1_pixels, x2_pixels, y2_pixels, x4_pixels, y4_pixels

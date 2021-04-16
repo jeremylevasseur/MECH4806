@@ -11,6 +11,7 @@ from plot_data import plotPidOutputAndBallPositionTimeseries, plotBallPositionTi
 
 # Third Party Libraries
 from tkinter import *
+import tinyik as ik
 
 # ================ CONSTANTS ================
 
@@ -43,7 +44,7 @@ startingYAcceleration = 0  # pixels/s^2
 # PID Properties
 kp = 1  # Proportional gain
 ki = 0.8  # Integral gain
-kd = 0.25  # Derivative gain
+kd = 0.5  # Derivative gain
 outputLowerLimit = -30  # degrees - Sets the minimum angle of platform rotation
 outputUpperLimit = 30  # degrees - Sets the maximum angle of platform rotation
 setPointX = screenWidth/2  # pixels - Where you want the ball to end up in the X coordinate system
@@ -52,14 +53,19 @@ setPointY = screenHeight/2  # pixels - Where you want the ball to end up in the 
 # Leg Constants
 distanceScaleLegs = screenWidth * 4  # 1 metre = 2000 pixels
 margin = 100  # Offsets drawings so that they aren't next to the GUI border
-L1 = 0.0225  # 22.5 mm - Length of the lower link
-L2 = 0.120  # 120 mm - Length of the upper link
-platformWidth = 0.160  # 160 mm
+L1 = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.0225)  # 22.5 mm - Length of the lower link
+L2 = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120)  # 120 mm - Length of the upper link
+platformWidth = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.160)  # 160 mm
 halfPlatformWidth = platformWidth / 2
 rotationPointRadius = 5  # For drawings
 origin_x = margin
 origin_y = (screenHeight - margin)
-theta = 30
+x3 = origin_x + metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.090)  # 90 mm
+y3 = origin_y - metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120)  # 120 mm
+x3_cartesian = 90.0  # 90 mm
+# x3_cartesian = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.090)  # 90 mm
+y3_cartesian = 120.0  # 120 mm
+# y3_cartesian = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120)  # 120 mm
 
 # ================ CREATING MONITORING OBJECTS ================
 
@@ -127,6 +133,12 @@ pidY = PID_Controller(
     outputUpperLimit,
     setPointY)
 
+# Initializing the actuators for inverse kinematics
+# legXActuator = ik.Actuator(['z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.0225), 0.0, 0.0], 'z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120), 0.0, 0.0]])
+legXActuator = ik.Actuator(['z', [22.5, 0.0, 0.0], 'z', [120.0, 0.0, 0.0]])
+# legYActuator = ik.Actuator(['z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.0225), 0.0, 0.0], 'z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120), 0.0, 0.0]])
+legYActuator = ik.Actuator(['z', [22.5, 0.0, 0.0], 'z', [120.0, 0.0, 0.0]])
+
 # Creating the platform GUI
 tkRoot, canvas = createPlatformGUI(screenWidth, screenHeight)
 
@@ -145,19 +157,35 @@ buttonsWindow, buttonsCanvas = createButtonGUI(screenWidth=screenWidth, screenHe
 ballOval = canvas.create_oval(ball.xPosition - ball.radius, ball.yPosition - ball.radius, ball.xPosition + ball.radius, ball.yPosition + ball.radius, fill='red')
 
 # Calculating important points for the legs GUI
-x1, y1, x2, y2, x3, y3, x4, y4 = calculateAllImportantPoints(origin_x, origin_y, distanceScaleLegs, halfPlatformWidth, platform.angleOfRotationInX, theta, L1)
+x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(legXActuator, L1, halfPlatformWidth, platform.angleOfRotationInX, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
+
+# X CANVAS
 # Drawing platform rotation point on leg X canvas
 platformRotationPointLegX = legXCanvas.create_oval(x3 - rotationPointRadius, y3 - rotationPointRadius, x3 + rotationPointRadius, y3 + rotationPointRadius, fill='black')
-# Drawing platform rotation point on leg X canvas
-platformRotationPointLegY = legYCanvas.create_oval(x3 - rotationPointRadius, y3 - rotationPointRadius, x3 + rotationPointRadius, y3 + rotationPointRadius, fill='black')
 # Drawing platform line 1 on leg X canvas
 platformLine1LegX = legXCanvas.create_line(x2, y2, x3, y3, width=5)
 # Drawing platform line 2 on leg X canvas
 platformLine2LegX = legXCanvas.create_line(x3, y3, x4, y4, width=5)
+# Drawing servo rotation point on leg X canvas
+servoRotationPointLegX = legXCanvas.create_oval(origin_x - rotationPointRadius, origin_y - rotationPointRadius, origin_x + rotationPointRadius, origin_y + rotationPointRadius, fill='black')
+# Drawing lower link line on leg X canvas
+lowerLinkLineLegX = legXCanvas.create_line(origin_x, origin_y, x1, y1, width=5)
+# Drawing upper link line on leg X canvas
+upperLinkLineLegX = legXCanvas.create_line(x1, y1, x2, y2, width=5)
+
+# Y CANVAS
+# Drawing platform rotation point on leg Y canvas
+platformRotationPointLegY = legYCanvas.create_oval(x3 - rotationPointRadius, y3 - rotationPointRadius, x3 + rotationPointRadius, y3 + rotationPointRadius, fill='black')
 # Drawing platform line 1 on leg Y canvas
 platformLine1LegY = legYCanvas.create_line(x2, y2, x3, y3, width=5)
 # Drawing platform line 2 on leg Y canvas
 platformLine2LegY = legYCanvas.create_line(x3, y3, x4, y4, width=5)
+# Drawing servo rotation point on leg Y canvas
+servoRotationPointLegY = legYCanvas.create_oval(origin_x - rotationPointRadius, origin_y - rotationPointRadius, origin_x + rotationPointRadius, origin_y + rotationPointRadius, fill='black')
+# Drawing lower link line on leg Y canvas
+lowerLinkLineLegY = legYCanvas.create_line(origin_x, origin_y, x1, y1, width=5)
+# Drawing upper link line on leg Y canvas
+upperLinkLineLegY = legYCanvas.create_line(x1, y1, x2, y2, width=5)
 
 def applyForceInPositiveX():
     print("Applying Force In +X")
@@ -185,44 +213,54 @@ forceInNegativeYButton = Button(buttonsWindow, text="Apply Force In +Y", command
 forceInPositiveYButton = Button(buttonsWindow, text="Apply Force In -Y", command=applyForceInPositiveY).grid()
 
 
-def updateLegX(alpha, theta=30):
+def updateLegX(alpha):
     # Defining global variables
     global legXWindow, legXCanvas
-    global x1, y1, x2, y2, x3, y3, x4, y4
-    global platformLine1LegX, platformLine2LegX
+    global platformLine1LegX, platformLine2LegX, lowerLinkLineLegX, upperLinkLineLegX
 
-    x1, y1, x2, y2, x3, y3, x4, y4 = calculateAllImportantPoints(origin_x, origin_y, distanceScaleLegs, halfPlatformWidth, alpha, theta, L1)
+    x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(legXActuator, L1, halfPlatformWidth, platform.angleOfRotationInX, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
 
     # ================ RE-DRAWING SYSTEM ================
 
-    # Removing everything
+    # Removing previous lines on leg X canvas
     legXCanvas.delete(platformLine1LegX)
     legXCanvas.delete(platformLine2LegX)
+    legXCanvas.delete(lowerLinkLineLegX)
+    legXCanvas.delete(upperLinkLineLegX)
 
-    # Platform Line 1
+    # Drawing platform line 1 on leg X canvas
     platformLine1LegX = legXCanvas.create_line(x2, y2, x3, y3, width=5)
-    # Platform Line 2
+    # Drawing platform line 2 on leg X canvas
     platformLine2LegX = legXCanvas.create_line(x3, y3, x4, y4, width=5)
+    # Drawing lower link line on leg X canvas
+    lowerLinkLineLegX = legXCanvas.create_line(origin_x, origin_y, x1, y1, width=5)
+    # Drawing upper link line on leg X canvas
+    upperLinkLineLegX = legXCanvas.create_line(x1, y1, x2, y2, width=5)
 
 
-def updateLegY(alpha, theta=30):
+def updateLegY(alpha):
     # Defining global variables
     global legYWindow, legYCanvas
-    global x1, y1, x2, y2, x3, y3, x4, y4
-    global platformLine1LegY, platformLine2LegY
+    global platformLine1LegY, platformLine2LegY, lowerLinkLineLegY, upperLinkLineLegY
 
-    x1, y1, x2, y2, x3, y3, x4, y4 = calculateAllImportantPoints(origin_x, origin_y, distanceScaleLegs, halfPlatformWidth, alpha, theta, L1)
+    x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(legYActuator, L1, halfPlatformWidth, platform.angleOfRotationInY, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
 
     # ================ RE-DRAWING SYSTEM ================
 
-    # Removing everything
+    # Removing previous lines on leg Y canvas
     legYCanvas.delete(platformLine1LegY)
     legYCanvas.delete(platformLine2LegY)
+    legYCanvas.delete(lowerLinkLineLegY)
+    legYCanvas.delete(upperLinkLineLegY)
 
-    # Platform Line 1
+    # Drawing platform line 1 on leg Y canvas
     platformLine1LegY = legYCanvas.create_line(x2, y2, x3, y3, width=5)
-    # Platform Line 2
+    # Drawing platform line 2 on leg Y canvas
     platformLine2LegY = legYCanvas.create_line(x3, y3, x4, y4, width=5)
+    # Drawing lower link line on leg Y canvas
+    lowerLinkLineLegY = legYCanvas.create_line(origin_x, origin_y, x1, y1, width=5)
+    # Drawing upper link line on leg Y canvas
+    upperLinkLineLegY = legYCanvas.create_line(x1, y1, x2, y2, width=5)
 
 
 def controller():
@@ -322,7 +360,7 @@ def controller():
         tkRoot.after(int(sampleTime*1000), controller)  # Re-run this function after interval (in milliseconds)
 
 
-tkRoot.after(15000, controller)  # Begin the loop of getting control feedback
+tkRoot.after(3000, controller)  # Begin the loop of getting control feedback
 
 # Running the GUI
 tkRoot.mainloop()
