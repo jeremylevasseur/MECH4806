@@ -1,3 +1,10 @@
+'''
+    This file contains the class for the PID controller.
+
+    Last Updated: 2021-04-16
+    Written By: Jeremy Levasseur
+'''
+
 from simple_pid import PID
 
 class PID_Controller():

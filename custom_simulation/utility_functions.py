@@ -1,3 +1,10 @@
+'''
+    This file contains functions that are useful for various computations relating to the simulation.
+
+    Last Updated: 2021-04-16
+    Written By: Jeremy Levasseur
+'''
+
 import numpy as np
 import math
 import tinyik as ik

@@ -1,13 +1,20 @@
+'''
+    This is the main python file that runs the simulation.
+
+    Last Updated: 2021-04-16
+    Written By: Jeremy Levasseur
+'''
+
+
 # ================ LIBRARY IMPORTS ================
 
 # Personally Created Libraries
 from utility_functions import pixelMeasurementToMetresMeasurement, metresMeasurementToPixelMeasurement, calculateAllImportantPoints
 from gui import createPlatformGUI, createLegsGUI, createButtonGUI
-from ball_object import Ball
-from platform_object import Platform
+from ball_and_platform import Ball, Platform
 from pid import PID_Controller
 from dynamics_and_kinematics import angleOfTiltToAcceleration, distanceMoved, finalVelocity
-from plot_data import plotPidOutputAndBallPositionTimeseries, plotBallPositionTimeseries
+from plotting import plotPidOutputAndBallPositionTimeseries, plotBallPositionTimeseries
 
 # Third Party Libraries
 from tkinter import *

@@ -1,3 +1,10 @@
+'''
+    This file contains functions that create GUI windows.
+
+    Last Updated: 2021-04-16
+    Written By: Jeremy Levasseur
+'''
+
 from tkinter import *
 import math
 from utility_functions import pixelMeasurementToMetresMeasurement, metresMeasurementToPixelMeasurement

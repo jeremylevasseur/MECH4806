@@ -1,5 +1,11 @@
-import math
+'''
+    This file contains functions that compute dynamic and kinematic calculations.
 
+    Last Updated: 2021-04-16
+    Written By: Jeremy Levasseur
+'''
+
+import math
 
 # ================ DYNAMICS ================
 
@@ -38,6 +44,16 @@ def angleOfTiltToAcceleration(gravity, angleOfTilt):
 def distanceMoved(d_i, v_i, a, t):
     return d_i + ( v_i * t ) + ( 0.5 * a * (t**2) )
 
+
+'''
+    Inputs:
+        v_i         =>      Initial Velocity (m/s)
+        a           =>      Acceleration (m/s^2)
+        t           =>      Time (s)
+
+    Outputs:
+        v_f         =>      Final Velocity (m/s) 
+'''
 def finalVelocity(v_i, a, t):
     return v_i + (a*t)
 

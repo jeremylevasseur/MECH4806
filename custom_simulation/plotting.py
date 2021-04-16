@@ -1,3 +1,10 @@
+'''
+    This file contains functions that plot input data using Matplotlib.
+
+    Last Updated: 2021-04-16
+    Written By: Jeremy Levasseur
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,13 +23,19 @@ def plotPidOutputAndBallPositionTimeseries(coordinate, time, positionData, pidDa
 
     plt.show()
 
+
 def plotBallPositionTimeseries(coordinate, time, positionData):
     fig, ax = plt.subplots()
+    
     ax.plot(time, positionData)
+    
     ax.set(
         xlabel='Time (s)',
         ylabel='Ball ' + str(coordinate) + ' Position (m)',
         title=str(coordinate) + ' Coordinate Position vs. Time')
+    
     ax.grid()
+    
     fig.savefig(str(coordinate) + "-position-data.png")
+    
     plt.show()
