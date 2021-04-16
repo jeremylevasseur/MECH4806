@@ -11,7 +11,6 @@ from plot_data import plotPidOutputAndBallPositionTimeseries, plotBallPositionTi
 
 # Third Party Libraries
 from tkinter import *
-import tinyik as ik
 
 # ================ CONSTANTS ================
 
@@ -23,7 +22,7 @@ screenHeight = 500  # pixels
 gravity = 9.81  # m/s^s
 distanceScale = screenWidth * 2  # 1 metre = 1000 pixels
 sampleTime = 0.025  # Rate at which the position measurements occur
-appliedAcceleration = 40000.0  # pixels/s^2 - The acceleration value that is applied to the ball when a button is clicked
+appliedAcceleration = 30000.0  # pixels/s^2 - The acceleration value that is applied to the ball when a button is clicked
 
 # Ball Properties
 ballMass = 0.45  # kg
@@ -42,11 +41,11 @@ startingXAcceleration = 0  # pixels/s^2
 startingYAcceleration = 0  # pixels/s^2
 
 # PID Properties
-kp = 1  # Proportional gain
-ki = 0.8  # Integral gain
-kd = 0.5  # Derivative gain
-outputLowerLimit = -30  # degrees - Sets the minimum angle of platform rotation
-outputUpperLimit = 30  # degrees - Sets the maximum angle of platform rotation
+kp = 1.5  # Proportional gain
+ki = 0.005  # Integral gain
+kd = 1.5  # Derivative gain
+outputLowerLimit = -15  # degrees - Sets the minimum angle of platform rotation
+outputUpperLimit = 15  # degrees - Sets the maximum angle of platform rotation
 setPointX = screenWidth/2  # pixels - Where you want the ball to end up in the X coordinate system
 setPointY = screenHeight/2  # pixels - Where you want the ball to end up in the Y coordinate system
 
@@ -58,6 +57,7 @@ L2 = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120)  # 120 mm - L
 platformWidth = metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.160)  # 160 mm
 halfPlatformWidth = platformWidth / 2
 rotationPointRadius = 5  # For drawings
+servoBoxWidth = 30  # For drawings
 origin_x = margin
 origin_y = (screenHeight - margin)
 x3 = origin_x + metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.090)  # 90 mm
@@ -133,20 +133,14 @@ pidY = PID_Controller(
     outputUpperLimit,
     setPointY)
 
-# Initializing the actuators for inverse kinematics
-# legXActuator = ik.Actuator(['z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.0225), 0.0, 0.0], 'z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120), 0.0, 0.0]])
-legXActuator = ik.Actuator(['z', [22.5, 0.0, 0.0], 'z', [120.0, 0.0, 0.0]])
-# legYActuator = ik.Actuator(['z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.0225), 0.0, 0.0], 'z', [metresMeasurementToPixelMeasurement(distanceScaleLegs, 0.120), 0.0, 0.0]])
-legYActuator = ik.Actuator(['z', [22.5, 0.0, 0.0], 'z', [120.0, 0.0, 0.0]])
-
 # Creating the platform GUI
 tkRoot, canvas = createPlatformGUI(screenWidth, screenHeight)
 
 # Creating the first leg GUI
-legXWindow, legXCanvas = createLegsGUI(1, screenWidth=screenWidth, screenHeight=screenHeight)
+legXWindow, legXCanvas = createLegsGUI("X", screenWidth=screenWidth, screenHeight=screenHeight)
 
 # Creating the second leg GUI
-legYWindow, legYCanvas = createLegsGUI(2, screenWidth=screenWidth, screenHeight=screenHeight)
+legYWindow, legYCanvas = createLegsGUI("Y", screenWidth=screenWidth, screenHeight=screenHeight)
 
 # Creating the button GUI
 buttonsWindow, buttonsCanvas = createButtonGUI(screenWidth=screenWidth, screenHeight=screenHeight)
@@ -157,7 +151,7 @@ buttonsWindow, buttonsCanvas = createButtonGUI(screenWidth=screenWidth, screenHe
 ballOval = canvas.create_oval(ball.xPosition - ball.radius, ball.yPosition - ball.radius, ball.xPosition + ball.radius, ball.yPosition + ball.radius, fill='red')
 
 # Calculating important points for the legs GUI
-x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(legXActuator, L1, halfPlatformWidth, platform.angleOfRotationInX, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
+x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(L1, halfPlatformWidth, platform.angleOfRotationInX, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
 
 # X CANVAS
 # Drawing platform rotation point on leg X canvas
@@ -166,6 +160,8 @@ platformRotationPointLegX = legXCanvas.create_oval(x3 - rotationPointRadius, y3 
 platformLine1LegX = legXCanvas.create_line(x2, y2, x3, y3, width=5)
 # Drawing platform line 2 on leg X canvas
 platformLine2LegX = legXCanvas.create_line(x3, y3, x4, y4, width=5)
+# Drawing servo box on x canvas
+servoBoxLegX = legXCanvas.create_rectangle(origin_x - servoBoxWidth, origin_y - servoBoxWidth, origin_x + servoBoxWidth, origin_y + servoBoxWidth, fill='red')
 # Drawing servo rotation point on leg X canvas
 servoRotationPointLegX = legXCanvas.create_oval(origin_x - rotationPointRadius, origin_y - rotationPointRadius, origin_x + rotationPointRadius, origin_y + rotationPointRadius, fill='black')
 # Drawing lower link line on leg X canvas
@@ -180,6 +176,8 @@ platformRotationPointLegY = legYCanvas.create_oval(x3 - rotationPointRadius, y3 
 platformLine1LegY = legYCanvas.create_line(x2, y2, x3, y3, width=5)
 # Drawing platform line 2 on leg Y canvas
 platformLine2LegY = legYCanvas.create_line(x3, y3, x4, y4, width=5)
+# Drawing servo box on Y canvas
+servoBoxLegY = legYCanvas.create_rectangle(origin_x - servoBoxWidth, origin_y - servoBoxWidth, origin_x + servoBoxWidth, origin_y + servoBoxWidth, fill='red')
 # Drawing servo rotation point on leg Y canvas
 servoRotationPointLegY = legYCanvas.create_oval(origin_x - rotationPointRadius, origin_y - rotationPointRadius, origin_x + rotationPointRadius, origin_y + rotationPointRadius, fill='black')
 # Drawing lower link line on leg Y canvas
@@ -218,7 +216,7 @@ def updateLegX(alpha):
     global legXWindow, legXCanvas
     global platformLine1LegX, platformLine2LegX, lowerLinkLineLegX, upperLinkLineLegX
 
-    x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(legXActuator, L1, halfPlatformWidth, platform.angleOfRotationInX, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
+    x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(L1, halfPlatformWidth, platform.angleOfRotationInX, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
 
     # ================ RE-DRAWING SYSTEM ================
 
@@ -243,7 +241,7 @@ def updateLegY(alpha):
     global legYWindow, legYCanvas
     global platformLine1LegY, platformLine2LegY, lowerLinkLineLegY, upperLinkLineLegY
 
-    x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(legYActuator, L1, halfPlatformWidth, platform.angleOfRotationInY, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
+    x1, y1, x2, y2, x4, y4 = calculateAllImportantPoints(L1, halfPlatformWidth, platform.angleOfRotationInY, origin_x, origin_y, x3, y3, x3_cartesian, y3_cartesian)
 
     # ================ RE-DRAWING SYSTEM ================
 

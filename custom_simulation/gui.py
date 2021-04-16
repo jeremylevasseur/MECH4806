@@ -23,10 +23,10 @@ def createPlatformGUI(screenWidth=500, screenHeight=500):
     # Returning tkinter object and the canvas object
     return tkRoot, rootCanvas
 
-def createLegsGUI(legNumber, screenWidth=500, screenHeight=500, theta=30, alpha=7.854):
+def createLegsGUI(legLetter, screenWidth=500, screenHeight=500, theta=30, alpha=7.854):
     # Creating the legs window
     legsWindow = Toplevel()
-    legsWindow.title("Leg " + str(legNumber) + " Simulation")
+    legsWindow.title("Leg " + str(legLetter) + " Simulation")
 
     # Creating the leg canvas
     legCanvas = Canvas(legsWindow, width=screenWidth, height=screenHeight)
